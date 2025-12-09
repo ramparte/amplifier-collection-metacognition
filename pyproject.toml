@@ -1,0 +1,41 @@
+[project]
+name = "metacognition"
+version = "0.1.0"
+description = "Metacognitive agents for adaptive problem-solving inspired by Poetiq's ARC-AGI solver"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+    {name = "Amplifier Contributors"}
+]
+
+[project.urls]
+Homepage = "https://github.com/microsoft/amplifier"
+Repository = "https://github.com/microsoft/amplifier-collection-metacognition"
+
+[tool.amplifier.collection]
+author = "Amplifier Team"
+capabilities = [
+    "complexity-assessment",
+    "iterative-refinement",
+    "solution-evaluation",
+    "ensemble-consensus",
+    "metacognitive-orchestration",
+]
+
+[tool.amplifier.collection.requires]
+amplifier-core = ">=0.1.0"
+amplifier-profiles = ">=0.1.0"
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-mock>=3.12.0",
+    "pytest-cov>=4.1.0",
+    "PyYAML>=6.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
