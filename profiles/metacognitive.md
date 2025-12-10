@@ -3,20 +3,8 @@ meta:
   name: metacognitive
   description: "Profile with metacognitive agents for adaptive problem-solving"
 
-providers:
-  - module: provider-anthropic
-    source: git+https://github.com/microsoft/amplifier-module-provider-anthropic@main
-    config:
-      model: claude-sonnet-4-5
-
-tools:
-  - module: tool-filesystem
-  - module: tool-bash
-  - module: tool-grep
-  - module: tool-task
-
-hooks:
-  - module: hooks-logging
+inherits:
+  - dev
 
 agents:
   include:
