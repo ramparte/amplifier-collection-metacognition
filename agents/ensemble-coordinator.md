@@ -220,3 +220,162 @@ stateless for extreme scale)."
 - Parallel = same wall-clock time
 - Worth it for critical decisions
 - Not for routine tasks
+
+## Error Handling
+
+### When One or More Strategies Fail
+**Problem**: Some parallel strategies timeout, error, or fail to complete
+
+**Response**: Continue with successful strategies, note failures
+
+```json
+{
+  "strategies_tried": 5,
+  "strategies_succeeded": 3,
+  "strategies_failed": 2,
+  "failed_strategies": [
+    {
+      "agent": "zen-architect (temp=0.7)",
+      "error": "TimeoutError: Exceeded 60s limit",
+      "suggestion": "Task may be too complex for this configuration"
+    },
+    {
+      "agent": "bug-hunter (temp=0.3)",
+      "error": "Task spawn failed: resource limit",
+      "suggestion": "Reduce concurrent strategies or increase resources"
+    }
+  ],
+  "consensus_groups": [...],
+  "recommendation": {
+    "selected_solution": "A",
+    "confidence": 0.7,
+    "reasoning": "3/5 strategies completed successfully. 2 converged on solution A. Confidence reduced due to partial failure.",
+    "note": "Results based on 3 successful strategies (2 failed). Consider rerunning failed strategies if more confidence needed."
+  }
+}
+```
+
+**Strategy**: As long as ≥2 strategies succeed, can still provide useful result
+
+### When All Strategies Fail
+**Problem**: None of the parallel strategies complete successfully
+
+**Response**:
+```json
+{
+  "strategies_tried": 5,
+  "strategies_succeeded": 0,
+  "recommendation": {
+    "selected_solution": null,
+    "confidence": 0.0,
+    "reasoning": "All ensemble strategies failed. Task may be: 1) Too complex for current approach, 2) Missing required context, or 3) Outside agent capabilities.",
+    "error": "complete_ensemble_failure"
+  },
+  "suggestions": [
+    "Decompose task into smaller subtasks",
+    "Verify all required context is available",
+    "Simplify task requirements",
+    "Consider manual human intervention"
+  ],
+  "failure_analysis": {
+    "common_error": "TimeoutError",
+    "likely_cause": "Task complexity exceeds reasonable completion time",
+    "recommendation": "Break into 3-5 smaller tasks"
+  }
+}
+```
+
+### When No Consensus Emerges (All Different)
+**Problem**: All strategies produce different solutions (1-1-1-1-1 vote)
+
+**Response**:
+```json
+{
+  "strategies_tried": 5,
+  "solutions_generated": 5,
+  "consensus_groups": [
+    {"solution_id": "A", "vote_count": 1, ...},
+    {"solution_id": "B", "vote_count": 1, ...},
+    {"solution_id": "C", "vote_count": 1, ...},
+    {"solution_id": "D", "vote_count": 1, ...},
+    {"solution_id": "E", "vote_count": 1, ...}
+  ],
+  "recommendation": {
+    "selected_solution": "A",
+    "confidence": 0.2,
+    "reasoning": "No consensus - all 5 strategies produced different solutions. This signals: 1) Problem has many valid approaches, 2) Requirements may be ambiguous, or 3) Task complexity is very high.",
+    "warning": "LOW CONFIDENCE - no agreement among experts"
+  },
+  "suggestions": [
+    "Clarify requirements to narrow solution space",
+    "Decompose problem into smaller decisions",
+    "Use quality scores to select best solution",
+    "Present top 2-3 options to user for human judgment"
+  ]
+}
+```
+
+**Note**: Low consensus = valuable signal that problem needs decomposition or clarification
+
+### When Strategies Time Out
+**Problem**: Strategies exceed time budget (e.g., 60s per strategy)
+
+**Response**:
+- Set reasonable timeouts (60s per strategy)
+- If one times out, continue with others
+- Note timeout in results
+- Adjust strategy complexity if many timeouts
+
+```json
+{
+  "execution_time_seconds": 65,
+  "timeout_limit": 60,
+  "strategies_timed_out": 2,
+  "note": "2 strategies exceeded 60s timeout. Consider: 1) Simpler strategies, 2) Longer timeout, or 3) Task decomposition"
+}
+```
+
+### When Resource Budget Exhausted
+**Problem**: Running low on tokens, time, or API quota
+
+**Response**:
+- Return best consensus from completed strategies
+- Note resource constraint
+- Suggest running fewer strategies next time
+
+```json
+{
+  "strategies_tried": 3,
+  "strategies_planned": 5,
+  "status": "budget_exhausted",
+  "recommendation": {
+    "selected_solution": "A",
+    "confidence": 0.6,
+    "reasoning": "Only 3 of 5 planned strategies completed before budget exhaustion. 2/3 agreed on solution A.",
+    "note": "Partial ensemble - allocate more resources for higher confidence"
+  }
+}
+```
+
+### When Task Is Too Simple for Ensemble
+**Problem**: Coordinator invoked ensemble for simple task (waste of resources)
+
+**Response**: Execute anyway but note inefficiency
+```json
+{
+  "warning": "Task appears simple (low complexity). Ensemble is expensive - consider single-pass instead.",
+  "recommendation": {
+    "selected_solution": "A",
+    "confidence": 1.0,
+    "reasoning": "All 5 strategies produced identical simple solution. Next time: use solve-directly for better efficiency."
+  }
+}
+```
+
+### Best Practices for Error Recovery
+1. **Graceful degradation**: 2/5 success is better than nothing
+2. **Transparency**: Always report failures and reduced confidence
+3. **Adaptive behavior**: Adjust based on failure patterns
+4. **Actionable feedback**: Suggest how to prevent similar failures
+5. **Resource awareness**: Monitor timeouts and budget
+6. **Fail-fast for all failures**: If all fail quickly, don't waste resources on retries

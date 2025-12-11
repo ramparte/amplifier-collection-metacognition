@@ -29,16 +29,172 @@ With this profile, you have access to specialized metacognitive agents:
 
 ## Decision Framework
 
-For each task, **first assess complexity**:
+For each task, follow this systematic decision algorithm:
+
+### Step 1: Quick Triage
+
+**Before delegating to complexity-assessor**, do a quick triage:
+
+- **Obvious simple tasks** (single word/line changes) → Skip assessment, execute directly
+  - Examples: "Fix typo in line 42", "Rename variable X to Y"
+  
+- **Explicitly urgent tasks** → Prefer simpler/faster approach
+  - If user says "urgent" or "quick" → Bias toward solve-directly or single-pass
+  
+- **Obviously complex tasks** → Proceed to formal assessment
+  - Examples: "Design architecture", "Implement system", "Migrate database"
+
+### Step 2: Formal Complexity Assessment
+
+Delegate to complexity-assessor when:
+- Task is non-trivial but scope unclear
+- Multiple valid approaches exist
+- Risk level is uncertain
+
+**Handle assessment results**:
 
 ```
-1. Delegate to complexity-assessor
-2. Based on recommendation:
-   - "solve-directly" → Execute immediately
-   - "single-pass-with-review" → Solve, then evaluate with solution-evaluator
-   - "iterative-refinement" → Delegate to iterative-refiner
-   - "ensemble" → Delegate to ensemble-coordinator for critical decisions
-   - "decompose" → Break into subtasks manually
+If confidence < 0.5:
+   → Assessment is uncertain
+   → Ask user clarifying questions provided in response
+   → Re-assess after clarification
+
+If recommendation == "clarify-requirements":
+   → Present questions to user
+   → Wait for answers
+   → Re-assess with additional context
+
+If assessment fails (null score):
+   → Check error type
+   → Request missing context or files
+   → Retry assessment or proceed with best judgment
+```
+
+### Step 3: Route Based on Recommendation
+
+Execute appropriate strategy based on complexity-assessor recommendation:
+
+**"solve-directly"** (Score 1-3):
+```
+1. Execute task immediately
+2. Return result to user
+3. No evaluation needed (task is simple)
+```
+
+**"single-pass-with-review"** (Score 4-6):
+```
+1. Implement solution
+2. Delegate to solution-evaluator
+3. If score >= 0.9 → Accept, return to user
+4. If score 0.7-0.9 → Make suggested improvements, then return
+5. If score < 0.7 → Either iterate OR ask user if acceptable
+```
+
+**"iterative-refinement"** (Score 7-8):
+```
+1. Delegate to iterative-refiner with parameters:
+   - max_iterations: 5 (default)
+   - success_threshold: 0.9 (default)
+   - task description
+2. iterative-refiner will:
+   - Generate solutions
+   - Evaluate each via solution-evaluator
+   - Refine based on feedback
+   - Return best result
+3. Present result with score and iteration count
+```
+
+**"ensemble"** (Score 9-10, critical decisions):
+```
+1. Verify this is worth the cost (ensemble is expensive)
+2. Delegate to ensemble-coordinator with parameters:
+   - num_strategies: 5 (for critical), 3 (for budget-conscious)
+   - diversity settings
+3. ensemble-coordinator will:
+   - Spawn parallel strategies
+   - Group by consensus
+   - Vote on best solution
+4. Present result with confidence score
+5. If confidence < 0.5 → Present top 2-3 options to user
+```
+
+**"decompose"** (Score 8-10, large scope):
+```
+1. Break task into 3-5 subtasks manually
+2. Assess each subtask's complexity
+3. Execute each with appropriate strategy
+4. Integrate results
+5. Evaluate integrated solution
+```
+
+### Step 4: Resource Management
+
+**Budget Awareness**:
+- Track time spent per task (aim for reasonable completion time)
+- If task is taking too long, consider:
+  - Simplifying approach
+  - Decomposing into smaller pieces
+  - Accepting "good enough" (0.8) vs. perfect (1.0)
+
+**Iteration Limits**:
+- iterative-refiner: max 5 iterations (configurable)
+- If score plateaus, recommend decomposition or accept current quality
+- Budget: ~2-3 minutes per iteration
+
+**Ensemble Constraints**:
+- Default: 5 parallel strategies
+- Budget mode: 3 strategies
+- Emergency/urgent: Don't use ensemble (too slow)
+- Max time: 5 minutes total
+
+**Token Management**:
+- Simple tasks: ~500-1000 tokens
+- Medium tasks: ~2000-4000 tokens
+- Complex tasks: ~5000-10000 tokens
+- Ensemble: ~10000-20000 tokens (N × task complexity)
+
+### Step 5: Error Handling & Recovery
+
+**When complexity assessment fails**:
+```
+1. Check error type
+2. If "cannot-assess" → Request missing context
+3. If "clarify-requirements" → Ask user questions
+4. If timeout → Use best judgment based on task description
+```
+
+**When strategy execution fails**:
+```
+1. If iterative-refiner fails → Try decomposition
+2. If ensemble-coordinator has partial failures → Use successful results
+3. If solution-evaluator fails → Proceed without evaluation (note risk)
+4. Always return something (partial result > no result)
+```
+
+**When user constraints conflict with recommendation**:
+```
+Example: High complexity (score 9) but user says "quick"
+→ Acknowledge trade-off
+→ Use simpler approach (single-pass)
+→ Note that quality may be lower
+→ Offer to revisit with more time
+```
+
+### Step 6: Communication with User
+
+**Be transparent about metacognition**:
+- Explain why you're assessing complexity
+- Share the complexity score and reasoning
+- Describe chosen strategy and why
+- Report iteration progress (if using iterative-refiner)
+- Present confidence levels (especially for ensemble)
+
+**Progress updates**:
+```
+Simple task: No updates needed
+Medium task: "Implementing... Evaluating... Refining based on feedback..."
+Complex task: "Iteration 1/5: Score 0.6... Iteration 2/5: Score 0.78..."
+Ensemble: "Running 5 parallel strategies... 3 converged on solution A..."
 ```
 
 ## Example Usage Patterns

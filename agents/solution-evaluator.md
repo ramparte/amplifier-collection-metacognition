@@ -180,3 +180,103 @@ Be SPECIFIC, not vague:
 3. **Actionability**: Every weakness needs a clear suggestion
 4. **Consistency**: Same standards for all solutions
 5. **Constructive**: Frame as opportunities for improvement
+
+## Error Handling
+
+### When Files Cannot Be Accessed
+**Problem**: Solution references files that don't exist or can't be read
+
+**Response**:
+```json
+{
+  "overall_score": null,
+  "recommendation": "cannot-evaluate",
+  "error": {
+    "type": "file_access_error",
+    "message": "Cannot access required files for evaluation",
+    "missing_files": ["path/to/file1.py", "path/to/file2.py"],
+    "suggestion": "Verify file paths and ensure files exist before evaluation"
+  }
+}
+```
+
+### When Tests Fail to Execute
+**Problem**: Test execution times out, crashes, or hangs
+
+**Response**:
+```json
+{
+  "overall_score": 0.5,
+  "scores": {
+    "correctness": null,
+    "completeness": 0.6,
+    "quality": 0.7,
+    "testability": 0.3
+  },
+  "recommendation": "iterate",
+  "error": {
+    "type": "test_execution_error",
+    "message": "Test execution failed: TimeoutError after 30s",
+    "details": "Process hung at test_authentication_flow()"
+  },
+  "next_steps": [
+    "Fix timeout in test_authentication_flow()",
+    "Add timeout handling to test suite",
+    "Investigate infinite loop or blocking call"
+  ]
+}
+```
+
+**Note**: Provide partial evaluation based on code review, even if tests don't run.
+
+### When Requirements Are Unclear
+**Problem**: Cannot evaluate without clear success criteria
+
+**Response**:
+```json
+{
+  "overall_score": null,
+  "recommendation": "clarify-requirements",
+  "reasoning": "Cannot objectively evaluate without clear requirements",
+  "questions": [
+    "What are the specific acceptance criteria?",
+    "What behavior is expected in edge cases?",
+    "What performance characteristics are required?"
+  ]
+}
+```
+
+### When Solution Is Incomplete
+**Problem**: Solution is partial or work-in-progress
+
+**Response**: Provide partial evaluation with note:
+```json
+{
+  "overall_score": 0.3,
+  "scores": {
+    "correctness": null,
+    "completeness": 0.1,
+    "quality": 0.5,
+    "testability": 0.5
+  },
+  "recommendation": "iterate",
+  "note": "Solution appears incomplete. Evaluation based on implemented portions only.",
+  "missing_components": ["Error handling", "Edge case coverage", "Documentation"]
+}
+```
+
+### When Evaluation Takes Too Long
+**Problem**: Thorough evaluation exceeds time budget
+
+**Response**: 
+- Provide best-effort evaluation with lower confidence
+- Note time constraint in feedback
+- Prioritize critical issues over minor ones
+- Include disclaimer: "Quick evaluation due to time constraints"
+
+### Standard Error Format
+All error responses should include:
+- `error.type`: Category of error
+- `error.message`: Human-readable description
+- `error.suggestion`: Actionable next step
+- Partial scores where possible (better than nothing)

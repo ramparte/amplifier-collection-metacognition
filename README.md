@@ -376,6 +376,14 @@ See the [examples/](examples/) directory for complete working examples:
 - **example-complex.md**: High complexity with iteration
 - **example-critical.md**: Critical decision with ensemble
 
+### Code Examples
+
+See [examples/code/](examples/code/) for programmatic usage:
+
+- **basic_usage.py**: Simple complexity assessment example
+- **iterative_workflow.py**: Complete iterative refinement workflow
+- **error_handling.py**: Error recovery patterns
+
 ## Philosophy
 
 This collection embodies Amplifier's core principles:
@@ -391,11 +399,17 @@ This collection embodies Amplifier's core principles:
 - Parallel exploration reduces bias
 - Consensus = confidence
 
+## Additional Documentation
+
+- **[CONTRIBUTING.md](CONTRIBUTING.md)**: Guidelines for contributing agents, tests, and documentation
+- **[docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)**: Common issues and solutions
+- **[docs/PERFORMANCE.md](docs/PERFORMANCE.md)**: Performance benchmarks and optimization guide
+
 ## Contributing
 
 Found a pattern that works well? Improve the scoring rubrics? Share!
 
-This collection welcomes contributions. See [CONTRIBUTING.md](CONTRIBUTING.md).
+This collection welcomes contributions. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## License
 

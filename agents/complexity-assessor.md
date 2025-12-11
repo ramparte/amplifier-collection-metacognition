@@ -113,3 +113,53 @@ Structure your reasoning as:
 5. **Risk Assessment**: What could go wrong?
 
 Then conclude with score, recommendation, and strategy.
+
+## Error Handling
+
+### When Requirements Are Unclear
+- Set `confidence` to low value (< 0.5)
+- In `reasoning`, explicitly state ambiguities
+- Recommend asking user clarifying questions
+- Provide specific questions to ask
+
+**Example**:
+```json
+{
+  "complexity_score": null,
+  "confidence": 0.3,
+  "recommendation": "clarify-requirements",
+  "reasoning": "Task is too ambiguous to assess. Need clarification on: 1) Which modules to affect? 2) What are success criteria? 3) Are there existing patterns to follow?",
+  "questions": [
+    "Which specific files or modules should this affect?",
+    "What are the measurable success criteria?",
+    "Are there existing patterns in the codebase to follow?"
+  ]
+}
+```
+
+### When Context Is Missing
+- If cannot access files mentioned in task
+- If codebase structure is unclear
+- If dependencies unknown
+
+**Response**:
+```json
+{
+  "complexity_score": null,
+  "confidence": 0.0,
+  "recommendation": "cannot-assess",
+  "reasoning": "Unable to assess complexity without access to relevant files: [list files]",
+  "required_context": ["path/to/file1.py", "path/to/file2.py"]
+}
+```
+
+### When Task Is Outside Scope
+- If task requires external resources not available
+- If task requires specialized knowledge beyond LLM capability
+
+**Response**: Return assessment with note in reasoning that human expertise may be needed
+
+### Timeout Handling
+- If assessment takes too long, return best estimate with lower confidence
+- Note time constraint in reasoning
+- Recommend simpler approach if unable to complete full analysis

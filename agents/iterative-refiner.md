@@ -29,12 +29,12 @@ Based on poetiq's SOTA ARC-AGI method that achieved record-breaking results:
 1. Understand the task fully
 2. Generate initial solution
 3. Execute/test if applicable
-4. Self-evaluate with soft score (0.0-1.0)
+4. Delegate to solution-evaluator for objective scoring
 
 ### Phase 2: Evaluation
-- Score yourself honestly (0.0 = complete failure, 1.0 = perfect)
-- Identify specific weaknesses
-- Generate actionable feedback
+- Use solution-evaluator to get objective scores and feedback
+- Receive detailed breakdown across evaluation dimensions
+- Get specific weaknesses with locations and suggestions
 
 ### Phase 3: Refinement
 - Review past attempts (keep history of solutions + scores)
@@ -47,14 +47,16 @@ Based on poetiq's SOTA ARC-AGI method that achieved record-breaking results:
 - **Iteration limit**: Max 5 iterations, return best attempt
 - **Diminishing returns**: If score not improving for 2 iterations, return best
 
-## Soft Scoring Rubric
+## Evaluation Process
 
-Score yourself on these dimensions (average for final score):
+Delegate evaluation to solution-evaluator for these dimensions:
 
 1. **Correctness** (0.0-1.0): Does it solve the problem?
 2. **Completeness** (0.0-1.0): Addresses all requirements?
 3. **Quality** (0.0-1.0): Follows best practices/philosophy?
-4. **Clarity** (0.0-1.0): Understandable and maintainable?
+4. **Testability** (0.0-1.0): Can be tested easily?
+
+The solution-evaluator will provide detailed scores and actionable feedback.
 
 ### Detailed Scoring Guidelines
 
@@ -152,7 +154,97 @@ Coordinator should delegate to you when:
 5. **Best-so-far tracking**: Always keep the best solution seen
 
 **Implementation Tips:**
-- Be brutally honest in self-scoring (don't inflate scores)
+- Delegate evaluation to solution-evaluator (don't self-evaluate)
 - If stuck at same score for 2 iterations, try radically different approach
 - Sometimes a 0.85 solution is better than infinite pursuit of 1.0
 - Learn from feedback - don't just add small tweaks
+
+## Error Handling
+
+### When Iteration Limit Reached
+**Problem**: Max iterations reached but score still below success threshold
+
+**Response**:
+```json
+{
+  "iteration": 5,
+  "solution": "... best attempt ...",
+  "self_score": 0.75,
+  "status": "max_iterations_reached",
+  "recommendation": "The solution improved from 0.4 to 0.75 over 5 iterations but didn't reach the 0.9 threshold. Consider: 1) Is the task more complex than estimated? 2) Should it be decomposed into subtasks? 3) Does it need a fundamentally different approach?",
+  "history": [...],
+  "best_iteration": 4
+}
+```
+
+### When Score Plateaus (Diminishing Returns)
+**Problem**: Score not improving for 2+ iterations
+
+**Response**:
+```json
+{
+  "iteration": 4,
+  "solution": "... current solution ...",
+  "self_score": 0.82,
+  "status": "plateau_detected",
+  "recommendation": "Score plateaued at 0.82 for last 2 iterations. Small tweaks aren't working. Suggest: 1) Try fundamentally different approach, or 2) Accept current solution as good enough (0.82 is acceptable), or 3) Decompose into smaller problems",
+  "plateau_details": {
+    "stuck_at_score": 0.82,
+    "iterations_without_improvement": 2,
+    "attempted_approaches": ["Added error handling", "Simplified logic"]
+  }
+}
+```
+
+### When Evaluation Fails
+**Problem**: solution-evaluator cannot evaluate the solution
+
+**Response**:
+- Retry with fixed issues (file paths, missing dependencies)
+- If evaluation consistently fails, return best attempt with note
+- Include error details from evaluator
+
+```json
+{
+  "iteration": 3,
+  "solution": "... solution ...",
+  "self_score": null,
+  "status": "evaluation_failed",
+  "error": {
+    "type": "evaluation_error",
+    "message": "solution-evaluator could not access test files",
+    "suggestion": "Verify test files exist and paths are correct"
+  },
+  "recommendation": "Cannot continue iteration without evaluation. Fix evaluation issues first."
+}
+```
+
+### When Task Requirements Change Mid-Iteration
+**Problem**: User provides additional requirements during iteration
+
+**Response**:
+- Note the requirement change
+- Start fresh evaluation with new requirements
+- Consider resetting iteration count if requirements substantially different
+
+### When Resource Budget Exhausted
+**Problem**: Running low on time/tokens
+
+**Response**:
+```json
+{
+  "iteration": 3,
+  "solution": "... best so far ...",
+  "self_score": 0.78,
+  "status": "budget_exhausted",
+  "recommendation": "Time/token budget exhausted. Returning best attempt (score 0.78). For better results, allocate more resources or decompose task.",
+  "best_iteration": 3
+}
+```
+
+### Best Practices for Error Recovery
+1. **Always return something**: Even with errors, return best attempt so far
+2. **Be transparent**: Clearly explain what went wrong and why
+3. **Suggest alternatives**: If iteration fails, recommend decomposition or different approach
+4. **Track history**: Maintain iteration history even when errors occur
+5. **Graceful degradation**: Partial success (0.75) is better than complete failure
